@@ -4,13 +4,15 @@ Ahh -- and here we have a driver. There options:
 * the screen size, which I'll default to 128x64 *moar pixels!*
 
     i2c = require 'i2c'
+    AdafruitGFX = require './Adafruit_GFX'
 
 I'm not usually one for classes, but well, it's hard to argue that a
 display isn't an object. So, I won't.
 
-    module.exports = class SSD1306
+    module.exports = class SSD1306 extends AdafruitGFX
 
       constructor: (@device='/dev/i2c-1', @address=0x3c, @width=128, @height=64) ->
+        super @width, @height
         @buffer = []
         while @buffer.length < @width*@height/8
           @buffer.push 0x00
@@ -38,6 +40,7 @@ display isn't an object. So, I won't.
         @control 0xF1
         @control @SETVCOMDETECT
         @control 0x40
+        @control @DEACTIVATE_SCROLL
         @control @DISPLAYALLON_RESUME
         @control @NORMALDISPLAY
         @control @DISPLAYON
@@ -107,7 +110,6 @@ This display is an in memory buffer that flushes to the device.
           @control 3
         i = 0
         while i < @buffer.length
-          console.log i, @buffer.slice(i, i+16)
           @wire.writeBytes 0x40, @buffer.slice(i, i+16), ->
           i+=16
 
@@ -120,73 +122,14 @@ This display is an in memory buffer that flushes to the device.
           @buffer[i] = 0xFF
 
       drawPixel: (x, y, color=@WHITE) ->
-        if color is @WHITE
+        if color
           @buffer[x+ (y/8>>0)*@width] |= (1 << (y&7))
         else
           @buffer[x+ (y/8>>0)*@width] &= ~(1 << (y&7))
 
-      drawLine: (x0, y0, x1, y1, color) ->
-        steep = Math.abs(y1 - y0) > Math.abs(x1 - x0)
-        if (steep)
-          x0 = [y0, y0 = x0][0]
-          x1 = [y1, y1 = x1][0]
-
-        if (x0 > x1)
-          x0 = [x1, x1 = x0][0]
-          y0 = [y1, y1 = y0][0]
-
-        dx = x1 - x0
-        dy = Math.abs(y1 - y0)
-
-        err = dx / 2
-
-        if (y0 < y1)
-          ystep = 1
-        else
-          ystep = -1
-
-
-        while x0<x1
-          if (steep)
-            @drawPixel(y0, x0, color)
-          else
-            @drawPixel(x0, y0, color)
-          err -= dy
-          if (err < 0)
-            y0 += ystep
-            err += dx
-          x0++
-
-      drawCircle: (x0, y0, r, color=@WHITE) ->
-        f = 1 - r
-        ddF_x = 1
-        ddF_y = -2 * r
-        x = 0
-        y = r
-
-        @drawPixel(x0, y0+r, color)
-        @drawPixel(x0, y0-r, color)
-        @drawPixel(x0+r, y0, color)
-        @drawPixel(x0-r, y0, color)
-
-        while (x<y)
-          if (f >= 0)
-            y--
-            ddF_y += 2
-          x++
-          ddF_x += 2
-          f += ddF_x
-
-          @drawPixel(x0 + x, y0 + y, color)
-          @drawPixel(x0 - x, y0 + y, color)
-          @drawPixel(x0 + x, y0 - y, color)
-          @drawPixel(x0 - x, y0 - y, color)
-          @drawPixel(x0 + y, y0 + x, color)
-          @drawPixel(x0 - y, y0 + x, color)
-          @drawPixel(x0 + y, y0 - x, color)
-          @drawPixel(x0 - y, y0 - x, color)
-
-The basic print method, display text.
+The basic print method, display text, replacing all text.
 
       print: (text) ->
-        console.log text
+        @setCursor 0, 0
+        for c in text
+          @write c.charCodeAt(0)
