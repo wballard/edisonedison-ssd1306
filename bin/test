@@ -1,0 +1,9 @@
+#!/usr/bin/env node
+
+var ssd1306 = require('../index');
+var showboat = new ssd1306();
+showboat.print('Hello World!')
+showboat.drawPixel(10,10,0)
+showboat.drawPixel(11,11,0)
+showboat.drawPixel(12,12,0)
+showboat.display()
