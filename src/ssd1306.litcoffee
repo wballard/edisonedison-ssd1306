@@ -125,6 +125,38 @@ This display is an in memory buffer that flushes to the device.
         else
           @buffer[x+ (y/8>>0)*@width] &= ~(1 << (y&7))
 
+      drawLine: (x0, y0, x1, y1, color) ->
+        steep = Math.abs(y1 - y0) > Math.abs(x1 - x0)
+        if (steep)
+          x0 = [y0, y0 = x0][0]
+          x1 = [y1, y1 = x1][0]
+
+        if (x0 > x1)
+          x0 = [x1, x1 = x0][0]
+          y0 = [y1, y1 = y0][0]
+
+        dx = x1 - x0
+        dy = Math.abs(y1 - y0)
+
+        err = dx / 2
+
+        if (y0 < y1)
+          ystep = 1
+        else
+          ystep = -1
+
+
+        while x0<x1
+          if (steep)
+            @drawPixel(y0, x0, color)
+          else
+            @drawPixel(x0, y0, color)
+          err -= dy
+          if (err < 0)
+            y0 += ystep
+            err += dx
+          x0++
+
       drawCircle: (x0, y0, r, color=@WHITE) ->
         f = 1 - r
         ddF_x = 1

@@ -4,4 +4,6 @@ var ssd1306 = require('../index');
 var showboat = new ssd1306();
 showboat.print('Hello World!')
 showboat.drawCircle(20,20,10)
+showboat.drawLine(10,10,20,20)
+showboat.drawLine(20,20,30,10)
 showboat.display()
