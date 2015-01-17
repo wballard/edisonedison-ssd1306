@@ -125,6 +125,35 @@ This display is an in memory buffer that flushes to the device.
         else
           @buffer[x+ (y/8>>0)*@width] &= ~(1 << (y&7))
 
+      drawCircle: (x0, y0, r, color=@WHITE) ->
+        f = 1 - r
+        ddF_x = 1
+        ddF_y = -2 * r
+        x = 0
+        y = r
+
+        @drawPixel(x0, y0+r, color)
+        @drawPixel(x0, y0-r, color)
+        @drawPixel(x0+r, y0, color)
+        @drawPixel(x0-r, y0, color)
+
+        while (x<y)
+          if (f >= 0)
+            y--
+            ddF_y += 2
+          x++
+          ddF_x += 2
+          f += ddF_x
+
+          @drawPixel(x0 + x, y0 + y, color)
+          @drawPixel(x0 - x, y0 + y, color)
+          @drawPixel(x0 + x, y0 - y, color)
+          @drawPixel(x0 - x, y0 - y, color)
+          @drawPixel(x0 + y, y0 + x, color)
+          @drawPixel(x0 - y, y0 + x, color)
+          @drawPixel(x0 + y, y0 - x, color)
+          @drawPixel(x0 - y, y0 - x, color)
+
 The basic print method, display text.
 
       print: (text) ->
